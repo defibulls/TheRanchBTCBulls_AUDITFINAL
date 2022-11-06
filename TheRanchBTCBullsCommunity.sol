@@ -551,13 +551,10 @@ contract TheRanchBTCBullsCommunity is
     * @dev When any other contract in our ecosystem checks the owner of the BTC Bulls, it will update the USDC amount for the 
     * BTC Bulls owner on this contract. It incentives ownership of both NFTS this way: 
     * In this example, lets assume we have a HayBale NFT on another smart contract, 
-    * - if the HayBale owner also owns a Bull NFT on this contract, they'll get amtToDistribute  == _amountToAdd, then we look for the partner of that address and do a 95/5 approach,
-    *   95% go to the owner and 5% goes to the partner.
-    * -if the Haybale owner does not own a bull, they'll get 85% of the _amountToAdd while 5% goes to core1 and core2 and 5% to the hostingSafe Balance
     * --------------------------------------------------------------------------------------------------------------------------------------------------------
-    * - own bull with active partner: 95 / 5
-    * - own bull with non active partner: 95 / 2.5 / 2.5
-    * - DO NOT own a bull: 85 / 5 / 5 / 5
+    * - own bull with and have an active partner: 96 / 4
+    * - else: 96 / 2 / 2
+
 
   
     */
@@ -573,32 +570,19 @@ contract TheRanchBTCBullsCommunity is
         for( uint i; i < _ownersOfTheNFTs.length; i++) {
             address _ownerOfNFT = _ownersOfTheNFTs[i];
 
-            // this address does own a BTC Bull
-            if (balanceOf(_ownerOfNFT) > 0){
-           
-                // get the referrer of this particular BTC Bull owner  
-                address referrer = myPartner[_ownerOfNFT];
-                uint256 referralAmt = _amountToAdd * 5 / 100;
+        
+            // get the referrer of this particular BTC Bull owner  
+            address referrer = myPartner[_ownerOfNFT];
+            uint256 referralAmt = _amountToAdd * 2 / 100;
 
-                // update the usdc  balances accordingly with their partner 
-                if(referrer != address(0) &&  balanceOf(referrer) > 0){
-                    btcBullOwners[referrer].USDC_Balance += referralAmt;
-                    btcBullOwners[_ownerOfNFT].USDC_Balance += (_amountToAdd - referralAmt);
-                } else {
-                    uint256 half_referralAmt = referralAmt / 2;
-                    btcBullOwners[coreTeam_1].USDC_Balance += half_referralAmt;
-                    btcBullOwners[coreTeam_2].USDC_Balance += half_referralAmt;
-                    btcBullOwners[_ownerOfNFT].USDC_Balance += (_amountToAdd - referralAmt);
-                }
-
-            // this address does NOT own a BTC Bull
-             } else {
-                uint256 deductionAmt = _amountToAdd * 5 / 100;
-
-                btcBullOwners[coreTeam_1].USDC_Balance += deductionAmt;
-                btcBullOwners[coreTeam_2].USDC_Balance += deductionAmt;
-                hostingSafeBalance += (deductionAmt);
-                btcBullOwners[_ownerOfNFT].USDC_Balance += (_amountToAdd - (deductionAmt * 3));
+            // update the usdc  balances accordingly with their partner 
+            if(referrer != address(0) &&  balanceOf(referrer) > 0 && balanceOf(_ownerOfNFT) > 0){
+                btcBullOwners[referrer].USDC_Balance += (referralAmt * 2);
+                btcBullOwners[_ownerOfNFT].USDC_Balance += (_amountToAdd - (referralAmt * 2));
+            } else {
+                btcBullOwners[coreTeam_1].USDC_Balance += referralAmt;
+                btcBullOwners[coreTeam_2].USDC_Balance += referralAmt;
+                btcBullOwners[_ownerOfNFT].USDC_Balance += (_amountToAdd - (referralAmt * 2));
             }
         }
     }
@@ -972,5 +956,4 @@ contract TheRanchBTCBullsCommunity is
 
 
 }
-
 
